@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Foodie — Order Food</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#f7f3ee; --card:#ffffff; --ink:#1f1b16; --muted:#8a8178;
+    --brand:#e8491d; --brand-ink:#ffffff; --veg:#2e9b4f; --nonveg:#c23b22;
+    --line:#ece5dc; --chip:#fbe9df;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    padding-top:env(safe-area-inset-top,0); padding-bottom:env(safe-area-inset-bottom,0);
+  }
+  .wrap{max-width:480px;margin:0 auto;padding-bottom:90px;}
+
+  header{position:sticky; top:env(safe-area-inset-top,0); z-index:5; background:var(--bg); padding:14px 16px 10px;}
+  .loc{font-size:12px; color:var(--muted); display:flex; gap:4px; align-items:center;}
+  .loc b{color:var(--ink); font-size:14px;}
+  .search{margin-top:10px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:11px 14px; font-size:14px; color:var(--muted);}
+
+  .cats{display:flex; gap:10px; overflow-x:auto; padding:14px 16px 4px; scrollbar-width:none;}
+  .cats::-webkit-scrollbar{display:none;}
+  .cat{flex:0 0 auto; text-align:center; width:62px;}
+  .cat .ic{width:54px;height:54px;border-radius:16px;background:var(--chip);display:flex;align-items:center;justify-content:center;font-size:24px;}
+  .cat span{display:block;font-size:11px;margin-top:5px;color:var(--ink);}
+
+  .section-title{padding:18px 16px 8px; font-size:17px; font-weight:700;}
+
+  .list{padding:0 16px; display:flex; flex-direction:column; gap:14px;}
+  .r-card{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; cursor:pointer;}
+  .r-top{height:108px; background:linear-gradient(135deg,var(--chip),#fff); display:flex; align-items:center; justify-content:center; font-size:38px;}
+  .r-body{padding:12px 14px;}
+  .r-name{font-size:15px; font-weight:700;}
+  .r-meta{display:flex; justify-content:space-between; margin-top:4px; font-size:12.5px; color:var(--muted);}
+  .rating{background:#2e9b4f; color:#fff; border-radius:6px; padding:1px 6px; font-weight:700; font-size:12px;}
+
+  .menu-sheet{position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:20; display:none;}
+  .menu-sheet.open{display:block;}
+  .sheet-inner{position:absolute; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; background:var(--bg);
+    border-radius:20px 20px 0 0; max-height:85vh; overflow-y:auto; padding-bottom:env(safe-area-inset-bottom,0);}
+  .sheet-head{padding:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+  .sheet-head h2{margin:0; font-size:16px;}
+  .close-x{font-size:20px; color:var(--muted); background:none; border:none; padding:4px;}
+  .item{display:flex; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line);}
+  .item .dot{width:12px;height:12px;border:1.5px solid var(--veg);border-radius:2px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;}
+  .item .dot i{width:6px;height:6px;border-radius:50%;background:var(--veg);}
+  .item-name{font-size:14px; font-weight:600;}
+  .item-price{font-size:13px; color:var(--muted); margin-top:3px;}
+  .add-btn{flex:0 0 auto; align-self:center; background:var(--card); border:1px solid var(--brand); color:var(--brand);
+    font-weight:700; font-size:13px; border-radius:8px; padding:7px 14px; min-width:66px;}
+  .add-btn.active{background:var(--brand); color:#fff;}
+
+  .cartbar{position:fixed; left:16px; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0));
+    max-width:448px; margin:0 auto; background:var(--brand); color:var(--brand-ink);
+    border-radius:14px; padding:13px 18px; display:none; justify-content:space-between; align-items:center;
+    font-size:14px; font-weight:700; box-shadow:0 8px 24px rgba(232,73,29,.35); z-index:10;}
+  .cartbar.show{display:flex;}
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17130f; --card:#211b15; --ink:#f3ece3; --muted:#9a9089; --line:#30271e; --chip:#2a2017;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="loc">📍 Delivering to <b id="locLabel">Home</b></div>
+    <div class="search">🔍 Search for restaurants or dishes</div>
+  </header>
+
+  <div class="cats" id="cats"></div>
+
+  <div class="section-title">Restaurants near you</div>
+  <div class="list" id="list"></div>
+</div>
+
+<div class="menu-sheet" id="sheet">
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Menu</h2>
+      <button class="close-x" id="sheetClose">✕</button>
+    </div>
+    <div id="sheetItems"></div>
+  </div>
+</div>
+
+<div class="cartbar" id="cartbar">
+  <span id="cartInfo">0 items</span>
+  <span>View cart ›</span>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const categories = [
+  ["🍕","Pizza"],["🍔","Burgers"],["🍜","Noodles"],["🥗","Healthy"],
+  ["🍰","Desserts"],["☕","Beverages"],["🌮","Mexican"],["🍛","Biryani"]
+];
+document.getElementById('cats').innerHTML = categories.map(([ic,n])=>
+  `<div class="cat"><div class="ic">${ic}</div><span>${n}</span></div>`).join('');
+
+const restaurants = [
+  {id:1, name:"Spice Route", icon:"🍛", cuisine:"North Indian · Biryani", time:"28 min", rating:4.3, price:"₹300 for two",
+    items:[["Chicken Biryani",249],["Paneer Butter Masala",219],["Garlic Naan",59],["Dal Makhani",189]]},
+  {id:2, name:"Pizza Theory", icon:"🍕", cuisine:"Pizza · Italian", time:"22 min", rating:4.1, price:"₹400 for two",
+    items:[["Margherita Pizza",259],["Farmhouse Pizza",329],["Garlic Bread",129],["Pasta Alfredo",249]]},
+  {id:3, name:"Burger Social", icon:"🍔", cuisine:"Burgers · Fast Food", time:"18 min", rating:4.4, price:"₹250 for two",
+    items:[["Classic Cheese Burger",149],["Crispy Chicken Burger",179],["Loaded Fries",99],["Cold Coffee",89]]},
+  {id:4, name:"Green Bowl", icon:"🥗", cuisine:"Healthy · Salads", time:"25 min", rating:4.6, price:"₹350 for two",
+    items:[["Quinoa Bowl",279],["Greek Salad",229],["Sprouts Chaat",159],["Detox Juice",119]]}
+];
+
+const list = document.getElementById('list');
+list.innerHTML = restaurants.map(r=>`
+  <div class="r-card" data-id="${r.id}">
+    <div class="r-top">${r.icon}</div>
+    <div class="r-body">
+      <div class="r-name">${r.name}</div>
+      <div class="r-meta"><span>${r.cuisine}</span><span class="rating">★ ${r.rating}</span></div>
+      <div class="r-meta"><span>${r.time}</span><span>${r.price}</span></div>
+    </div>
+  </div>`).join('');
+
+let cart = {}; // key: "restId:itemName" -> {name, price, qty, restId}
+
+const sheet = document.getElementById('sheet');
+const sheetTitle = document.getElementById('sheetTitle');
+const sheetItems = document.getElementById('sheetItems');
+
+function openMenu(r){
+  sheetTitle.textContent = r.name;
+  sheetItems.innerHTML = r.items.map(([name,price])=>{
+    const key = r.id+":"+name;
+    const qty = cart[key]?.qty || 0;
+    return `<div class="item" data-key="${key}" data-rest="${r.id}" data-name="${name}" data-price="${price}">
+      <div>
+        <div class="item-name"><span class="dot"><i></i></span>${name}</div>
+        <div class="item-price">₹${price}</div>
+      </div>
+      <button class="add-btn ${qty?'active':''}">${qty? 'Added ✓' : 'ADD'}</button>
+    </div>`;
+  }).join('');
+  sheet.classList.add('open');
+}
+
+list.addEventListener('click', e=>{
+  const card = e.target.closest('.r-card');
+  if(!card) return;
+  const r = restaurants.find(x=>x.id==card.dataset.id);
+  openMenu(r);
+  if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+});
+
+document.getElementById('sheetClose').onclick = ()=> sheet.classList.remove('open');
+sheet.addEventListener('click', e=>{ if(e.target===sheet) sheet.classList.remove('open'); });
+
+sheetItems.addEventListener('click', e=>{
+  const btn = e.target.closest('.add-btn');
+  if(!btn) return;
+  const row = btn.closest('.item');
+  const key = row.dataset.key;
+  if(!cart[key]){
+    cart[key] = {name:row.dataset.name, price:+row.dataset.price, qty:0, restId:row.dataset.rest};
+  }
+  cart[key].qty += 1;
+  btn.textContent = 'Added ✓';
+  btn.classList.add('active');
+  if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  updateCartBar();
+});
+
+const cartbar = document.getElementById('cartbar');
+const cartInfo = document.getElementById('cartInfo');
+
+function updateCartBar(){
+  const items = Object.values(cart);
+  const count = items.reduce((s,i)=>s+i.qty,0);
+  const total = items.reduce((s,i)=>s+i.qty*i.price,0);
+  if(count>0){
+    cartbar.classList.add('show');
+    cartInfo.textContent = `${count} item${count>1?'s':''} · ₹${total}`;
+    if(tg){
+      tg.MainButton.setText(`Place order · ₹${total}`);
+      tg.MainButton.show();
+      tg.MainButton.onClick(placeOrder);
+    }
+  } else {
+    cartbar.classList.remove('show');
+    if(tg) tg.MainButton.hide();
+  }
+}
+
+// Point this at your deployed backend, e.g. "https://your-app.onrender.com"
+const API_URL = "";
+
+async function placeOrder(){
+  const itemsArr = Object.values(cart).map(i=>({name:i.name, qty:i.qty, price:i.price}));
+  const total = itemsArr.reduce((s,i)=>s+i.qty*i.price,0);
+  const restName = restaurants.find(r=>r.id==Object.values(cart)[0]?.restId)?.name || "Foodie";
+  const userId = tg?.initDataUnsafe?.user?.id;
+
+  if(!API_URL || !tg || !userId){
+    alert(`Order placed!\n${itemsArr.map(i=>`${i.qty}× ${i.name}`).join(', ')}\nTotal: ₹${total}`);
+    return;
+  }
+
+  tg.MainButton.showProgress();
+  try{
+    const res = await fetch(`${API_URL}/api/order`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ userId, items: itemsArr, total, restaurantName: restName })
+    });
+    if(!res.ok) throw new Error("Order failed");
+    tg.HapticFeedback?.notificationOccurred('success');
+    tg.close();
+  }catch(err){
+    tg.MainButton.hideProgress();
+    tg.HapticFeedback?.notificationOccurred('error');
+    alert("Couldn't place order. Please try again.");
+  }
+}
+
+if(tg?.themeParams?.bg_color){
+  document.documentElement.style.setProperty('--bg', tg.themeParams.bg_color);
+}
+</script>
+</body>
+</html>
