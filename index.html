@@ -7,233 +7,542 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
-    --bg:#f7f3ee; --card:#ffffff; --ink:#1f1b16; --muted:#8a8178;
-    --brand:#e8491d; --brand-ink:#ffffff; --veg:#2e9b4f; --nonveg:#c23b22;
-    --line:#ece5dc; --chip:#fbe9df;
+    --bg:#f8f8fb; --card:#ffffff; --ink:#282c3f; --muted:#686b78;
+    --brand:#fc8019; --brand-ink:#ffffff; --veg:#0f8a65; --nonveg:#e43b4f;
+    --line:#f1f1f5; --chip:#fff3e9; --rate:#267e3e; --shadow:0 2px 10px rgba(40,44,63,.07);
   }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#121317; --card:#1b1c21; --ink:#f0f0f3; --muted:#8c8d94; --line:#2a2b31; --chip:#241c14; } }
+  :root[data-theme="dark"]{ --bg:#121317; --card:#1b1c21; --ink:#f0f0f3; --muted:#8c8d94; --line:#2a2b31; --chip:#241c14; }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
-  body{
-    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg); color:var(--ink);
-    padding-top:env(safe-area-inset-top,0); padding-bottom:env(safe-area-inset-bottom,0);
-  }
-  .wrap{max-width:480px;margin:0 auto;padding-bottom:90px;}
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink);
+    padding-top:env(safe-area-inset-top,0); padding-bottom:env(safe-area-inset-bottom,0); }
+  .wrap{max-width:480px;margin:0 auto;padding-bottom:70px;}
 
-  header{position:sticky; top:env(safe-area-inset-top,0); z-index:5; background:var(--bg); padding:14px 16px 10px;}
-  .loc{font-size:12px; color:var(--muted); display:flex; gap:4px; align-items:center;}
-  .loc b{color:var(--ink); font-size:14px;}
-  .search{margin-top:10px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:11px 14px; font-size:14px; color:var(--muted);}
+  #splash{position:fixed; inset:0; background:var(--brand); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; transition:opacity .4s ease;}
+  #splash .logo{font-size:54px;} #splash .name{font-size:22px; font-weight:800; margin-top:8px;}
 
-  .cats{display:flex; gap:10px; overflow-x:auto; padding:14px 16px 4px; scrollbar-width:none;}
+  header{background:var(--card); padding:14px 16px 10px; box-shadow:var(--shadow); position:sticky; top:env(safe-area-inset-top,0); z-index:6;}
+  .loc-row{display:flex; justify-content:space-between; align-items:center;}
+  .loc{font-size:11px; color:var(--muted); font-weight:700;}
+  .loc b{display:flex; align-items:center; gap:4px; color:var(--ink); font-size:16px; font-weight:800; margin-top:2px;}
+  .loc b::after{content:'▾'; font-size:10px; color:var(--muted); font-weight:400;}
+  .head-icons{display:flex; gap:7px; align-items:center;}
+  .icon-btn{width:30px;height:30px;border-radius:50%;background:var(--chip);border:none;display:flex;align-items:center;justify-content:center;font-size:13.5px; position:relative;}
+  .wallet-badge{position:absolute; bottom:-5px; right:-5px; background:var(--veg); color:#fff; font-size:8px; font-weight:800; border-radius:6px; padding:1px 4px;}
+  .search{margin-top:11px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 14px; font-size:13.5px; display:flex; align-items:center; gap:8px;}
+  .search input{border:none; background:none; outline:none; font-size:13.5px; color:var(--ink); width:100%;}
+  .search input::placeholder{color:var(--muted);}
+  .filters{display:flex; gap:8px; overflow-x:auto; margin-top:10px; scrollbar-width:none;}
+  .filters::-webkit-scrollbar{display:none;}
+  .chip{flex:0 0 auto; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; border:1px solid var(--line); color:var(--ink); background:var(--card); white-space:nowrap;}
+  .chip.on{background:var(--chip); border-color:var(--brand); color:var(--brand);}
+
+  .refer{margin:14px 16px 0; background:linear-gradient(120deg,#1f2630,#3a4454); color:#fff; border-radius:12px; padding:11px 14px; font-size:12.5px; font-weight:700; display:flex; justify-content:space-between; align-items:center;}
+  .refer span.go{font-size:11px; color:#ffd9a8;}
+  .banner{margin:14px 16px 0; display:flex; gap:12px; overflow-x:auto; scrollbar-width:none;}
+  .banner::-webkit-scrollbar{display:none;}
+  .b-card{flex:0 0 auto; width:250px; height:104px; border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:center; color:#fff; box-shadow:var(--shadow);}
+  .b-card.b1{background:linear-gradient(120deg,#fc8019,#ff5f39);} .b-card.b2{background:linear-gradient(120deg,#0f8a65,#1fb088);}
+  .b-card .tag{font-size:10px; opacity:.85; text-transform:uppercase; font-weight:700;}
+  .b-card .big{font-size:19px; font-weight:800; margin-top:3px;} .b-card .sub{font-size:11.5px; margin-top:3px; opacity:.9;}
+
+  .cats{display:flex; gap:16px; overflow-x:auto; padding:18px 16px 4px; scrollbar-width:none;}
   .cats::-webkit-scrollbar{display:none;}
-  .cat{flex:0 0 auto; text-align:center; width:62px;}
-  .cat .ic{width:54px;height:54px;border-radius:16px;background:var(--chip);display:flex;align-items:center;justify-content:center;font-size:24px;}
-  .cat span{display:block;font-size:11px;margin-top:5px;color:var(--ink);}
+  .cat{flex:0 0 auto; text-align:center; width:56px;}
+  .cat .ic{width:54px;height:54px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:25px;}
+  .cat span{display:block;font-size:10.5px;margin-top:6px;color:var(--ink);font-weight:700;}
 
-  .section-title{padding:18px 16px 8px; font-size:17px; font-weight:700;}
+  .section-title{padding:20px 16px 2px; font-size:16px; font-weight:800;}
+  .section-sub{padding:0 16px 10px; font-size:12px; color:var(--muted);}
+  .list{padding:0 16px; display:flex; flex-direction:column; gap:16px;}
+  .r-card{background:var(--card); border-radius:16px; overflow:hidden; cursor:pointer; box-shadow:var(--shadow);}
+  .r-top{position:relative; height:140px; background:radial-gradient(120% 120% at 15% 10%,var(--chip),#fcece0 55%,#f7dfca); display:flex; align-items:center; justify-content:center; font-size:50px;}
+  .r-badge{position:absolute; left:0; top:12px; background:#1f2630; color:#fff; font-size:10.5px; font-weight:800; padding:3px 10px 3px 8px; border-radius:0 6px 6px 0;}
+  .heart{position:absolute; right:10px; top:10px; width:28px;height:28px;border-radius:50%; background:rgba(255,255,255,.9); display:flex;align-items:center;justify-content:center; font-size:14px; border:none;}
+  .r-time-pill{position:absolute; right:10px; bottom:10px; background:rgba(255,255,255,.95); color:var(--ink); font-size:11px; font-weight:800; padding:4px 9px; border-radius:7px;}
+  .r-body{padding:12px 14px 14px;}
+  .r-name{font-size:16px; font-weight:800;}
+  .r-meta{display:flex; align-items:center; gap:6px; margin-top:5px; font-size:12.5px; color:var(--muted);}
+  .rating{background:var(--rate); color:#fff; border-radius:5px; padding:1px 6px; font-weight:800; font-size:11.5px;}
+  .dot-sep{color:var(--line); font-weight:900;}
+  .r-offer{margin-top:9px; padding-top:9px; border-top:1px dashed var(--line); font-size:12.5px; font-weight:800;}
+  .empty{padding:40px 16px; text-align:center; color:var(--muted); font-size:13px;}
 
-  .list{padding:0 16px; display:flex; flex-direction:column; gap:14px;}
-  .r-card{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; cursor:pointer;}
-  .r-top{height:108px; background:linear-gradient(135deg,var(--chip),#fff); display:flex; align-items:center; justify-content:center; font-size:38px;}
-  .r-body{padding:12px 14px;}
-  .r-name{font-size:15px; font-weight:700;}
-  .r-meta{display:flex; justify-content:space-between; margin-top:4px; font-size:12.5px; color:var(--muted);}
-  .rating{background:#2e9b4f; color:#fff; border-radius:6px; padding:1px 6px; font-weight:700; font-size:12px;}
-
-  .menu-sheet{position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:20; display:none;}
-  .menu-sheet.open{display:block;}
-  .sheet-inner{position:absolute; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; background:var(--bg);
-    border-radius:20px 20px 0 0; max-height:85vh; overflow-y:auto; padding-bottom:env(safe-area-inset-bottom,0);}
-  .sheet-head{padding:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
-  .sheet-head h2{margin:0; font-size:16px;}
-  .close-x{font-size:20px; color:var(--muted); background:none; border:none; padding:4px;}
-  .item{display:flex; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line);}
+  .sheet{position:fixed; inset:0; background:rgba(15,16,20,.45); z-index:20; display:none;}
+  .sheet.open{display:block;}
+  .sheet-inner{position:absolute; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; background:var(--bg); border-radius:18px 18px 0 0; max-height:88vh; overflow-y:auto; padding-bottom:env(safe-area-inset-bottom,0);}
+  .sheet-head{padding:16px; background:var(--card); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0;}
+  .sheet-head h2{margin:0; font-size:16px; font-weight:800;}
+  .close-x{font-size:18px; color:var(--muted); background:var(--bg); border:none; width:28px;height:28px;border-radius:50%;}
+  .item{display:flex; justify-content:space-between; gap:12px; padding:14px 16px; background:var(--card); border-bottom:1px solid var(--line);}
   .item .dot{width:12px;height:12px;border:1.5px solid var(--veg);border-radius:2px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;}
-  .item .dot i{width:6px;height:6px;border-radius:50%;background:var(--veg);}
-  .item-name{font-size:14px; font-weight:600;}
-  .item-price{font-size:13px; color:var(--muted); margin-top:3px;}
-  .add-btn{flex:0 0 auto; align-self:center; background:var(--card); border:1px solid var(--brand); color:var(--brand);
-    font-weight:700; font-size:13px; border-radius:8px; padding:7px 14px; min-width:66px;}
-  .add-btn.active{background:var(--brand); color:#fff;}
+  .item .dot.nv{border-color:var(--nonveg);} .item .dot i{width:6px;height:6px;border-radius:50%;background:var(--veg);} .item .dot.nv i{background:var(--nonveg);}
+  .item-name{font-size:14px; font-weight:700;}
+  .item-stars{font-size:11px; color:var(--rate); font-weight:700; margin-top:2px;}
+  .best-chip{display:inline-block; font-size:9.5px; font-weight:800; color:#b56a00; background:var(--chip); padding:2px 6px; border-radius:4px; margin-bottom:4px;}
+  .item-price{font-size:13px; color:var(--muted); margin-top:4px;}
+  .item-right{flex:0 0 auto; align-self:center;}
+  .add-btn{background:var(--card); border:1px solid var(--line); color:var(--brand); font-weight:800; font-size:12.5px; border-radius:8px; padding:8px 18px;}
+  .stepper{display:flex; align-items:center; background:var(--brand); border-radius:8px; overflow:hidden; box-shadow:var(--shadow);}
+  .stepper button{background:none; border:none; color:#fff; font-size:15px; font-weight:800; padding:7px 12px;}
+  .stepper span{color:#fff; font-size:13px; font-weight:800; min-width:16px; text-align:center;}
 
-  .cartbar{position:fixed; left:16px; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0));
-    max-width:448px; margin:0 auto; background:var(--brand); color:var(--brand-ink);
-    border-radius:14px; padding:13px 18px; display:none; justify-content:space-between; align-items:center;
-    font-size:14px; font-weight:700; box-shadow:0 8px 24px rgba(232,73,29,.35); z-index:10;}
+  .cartbar{position:fixed; left:16px; right:16px; bottom:calc(66px + env(safe-area-inset-bottom,0)); max-width:448px; margin:0 auto; background:var(--brand); color:var(--brand-ink);
+    border-radius:12px; padding:14px 18px; display:none; justify-content:space-between; align-items:center; font-size:14px; font-weight:700; box-shadow:0 8px 20px rgba(252,128,25,.4); z-index:10; border:none; width:calc(100% - 32px);}
   .cartbar.show{display:flex;}
+  .tabbar{position:fixed; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; background:var(--card); border-top:1px solid var(--line); display:flex; z-index:9; padding-bottom:env(safe-area-inset-bottom,0);}
+  .tab{flex:1; text-align:center; padding:9px 0 7px; font-size:10px; font-weight:700; color:var(--muted); background:none; border:none;}
+  .tab .ic{font-size:18px; display:block; margin-bottom:2px;} .tab.active{color:var(--brand);}
 
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg:#17130f; --card:#211b15; --ink:#f3ece3; --muted:#9a9089; --line:#30271e; --chip:#2a2017;
-    }
-  }
+  .addr-opt{padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); background:var(--card);}
+  .addr-opt b{display:block; font-size:14px;} .addr-opt span{font-size:12px; color:var(--muted);}
+
+  .seg{display:flex; gap:8px; padding:14px 16px 0;}
+  .seg button{flex:1; padding:9px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-weight:700; font-size:12.5px; color:var(--ink);}
+  .seg button.on{background:var(--chip); border-color:var(--brand); color:var(--brand);}
+  .slot-row{padding:10px 16px 0; display:none;}
+  .slot-row select{width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:13px;}
+  .pay-row{display:flex; gap:8px; padding:12px 16px 0;}
+  .pay-opt{flex:1; text-align:center; padding:10px 4px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-size:11.5px; font-weight:700;}
+  .pay-opt.on{background:var(--chip); border-color:var(--brand); color:var(--brand);}
+  .wallet-row{display:flex; justify-content:space-between; align-items:center; padding:12px 16px; font-size:13px; font-weight:700;}
+  .wallet-row input{width:18px;height:18px;}
+
+  .coupon-row{display:flex; gap:8px; padding:14px 16px;}
+  .coupon-row input{flex:1; border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; background:var(--card); color:var(--ink);}
+  .coupon-row button{background:var(--brand); color:#fff; border:none; border-radius:8px; padding:0 16px; font-weight:800; font-size:12.5px;}
+  .bill{padding:4px 16px 16px;}
+  .bill-row{display:flex; justify-content:space-between; font-size:13px; color:var(--muted); padding:5px 0;}
+  .bill-row.total{color:var(--ink); font-weight:800; font-size:15px; border-top:1px dashed var(--line); margin-top:4px; padding-top:10px;}
+  .bill-row.disc{color:var(--veg); font-weight:700;}
+  .place-btn{margin:6px 16px 16px; background:var(--brand); color:#fff; border:none; border-radius:10px; padding:14px; font-weight:800; font-size:14px; width:calc(100% - 32px);}
+
+  .track-step{display:flex; gap:12px; padding:14px 16px;}
+  .track-dot{width:26px;height:26px;border-radius:50%;background:var(--line); display:flex;align-items:center;justify-content:center;font-size:13px; flex:0 0 auto;}
+  .track-step.done .track-dot{background:var(--veg); color:#fff;} .track-step.now .track-dot{background:var(--brand); color:#fff;}
+  .track-step b{display:block; font-size:13.5px;} .track-step span{font-size:11.5px; color:var(--muted);}
+  .road{margin:4px 16px 0; height:34px; background:var(--chip); border-radius:17px; position:relative; overflow:hidden; display:none;}
+  .road .bike{position:absolute; top:50%; transform:translateY(-50%); font-size:18px; animation:ride 2.5s linear infinite;}
+  @keyframes ride{from{left:-10%;} to{left:95%;}}
+
+  .order-hist{padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); font-size:13px;}
+  .order-hist b{display:block; font-size:14px;} .order-hist span{color:var(--muted); font-size:11.5px;}
+
+  .toast{position:fixed; left:16px; right:16px; max-width:448px; margin:0 auto; top:calc(10px + env(safe-area-inset-top,0));
+    background:#1f2630; color:#fff; padding:12px 16px; border-radius:10px; font-size:13px; font-weight:700; z-index:50;
+    transform:translateY(-120%); transition:transform .35s ease; box-shadow:0 8px 20px rgba(0,0,0,.3);}
+  .toast.show{transform:translateY(0);}
+
+  .rate-overlay{position:fixed; inset:0; background:rgba(15,16,20,.6); z-index:30; display:none; align-items:center; justify-content:center;}
+  .rate-overlay.open{display:flex;}
+  .rate-card{background:var(--card); border-radius:16px; padding:24px; width:85%; max-width:320px; text-align:center;}
+  .rate-card h3{margin:0 0 6px; font-size:16px;} .rate-card p{margin:0 0 14px; font-size:12.5px; color:var(--muted);}
+  .stars{font-size:30px; letter-spacing:6px; cursor:pointer;}
+  .rate-card button{margin-top:16px; background:var(--brand); color:#fff; border:none; border-radius:8px; padding:11px 20px; font-weight:800; font-size:13px; width:100%;}
+
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .r-time-pill, :root:not([data-theme="light"]) .heart{background:rgba(27,28,33,.9); color:var(--ink);} }
+  :root[data-theme="dark"] .r-time-pill, :root[data-theme="dark"] .heart{background:rgba(27,28,33,.9); color:var(--ink);}
 </style>
 </head>
 <body>
+<div id="splash"><div class="logo">🍴</div><div class="name">Foodie</div></div>
+<div class="toast" id="toast"></div>
+
 <div class="wrap">
   <header>
-    <div class="loc">📍 Delivering to <b id="locLabel">Home</b></div>
-    <div class="search">🔍 Search for restaurants or dishes</div>
+    <div class="loc-row">
+      <div class="loc" id="t-deliverTo">DELIVER TO<b id="locLabel">Home</b></div>
+      <div class="head-icons">
+        <button class="icon-btn" id="langBtn">🌐</button>
+        <button class="icon-btn" id="themeBtn">🌙</button>
+        <button class="icon-btn" id="walletBtn">💰<span class="wallet-badge" id="walletBadge">0</span></button>
+      </div>
+    </div>
+    <div class="search"><span>🔍</span><input id="searchBox"></div>
+    <div class="filters">
+      <div class="chip" id="t-sort">⇅ Sort</div>
+      <div class="chip" id="t-rating">Rating 4.0+</div>
+      <div class="chip" id="vegChip">🟢 Pure Veg</div>
+      <div class="chip" id="t-fast">Fast Delivery</div>
+      <div class="chip" id="t-offers">Offers</div>
+    </div>
   </header>
+
+  <div class="refer" id="referBanner"><span id="t-refer">🎁 Refer a friend & earn ₹100</span><span class="go">Invite ›</span></div>
+
+  <div class="banner">
+    <div class="b-card b1"><div class="tag">Limited time</div><div class="big">Flat 50% OFF</div><div class="sub">Use code FOODIE50</div></div>
+    <div class="b-card b2"><div class="tag">Free delivery</div><div class="big">Above ₹199</div><div class="sub">On all restaurants nearby</div></div>
+  </div>
 
   <div class="cats" id="cats"></div>
 
-  <div class="section-title">Restaurants near you</div>
+  <div class="section-title" id="t-near">Restaurants near you</div>
+  <div class="section-sub" id="t-picked">Hand-picked for your location</div>
   <div class="list" id="list"></div>
 </div>
 
-<div class="menu-sheet" id="sheet">
-  <div class="sheet-inner">
-    <div class="sheet-head">
-      <h2 id="sheetTitle">Menu</h2>
-      <button class="close-x" id="sheetClose">✕</button>
-    </div>
-    <div id="sheetItems"></div>
-  </div>
-</div>
+<div class="sheet" id="sheet"><div class="sheet-inner">
+  <div class="sheet-head"><h2 id="sheetTitle">Menu</h2><button class="close-x" data-close>✕</button></div>
+  <div id="sheetItems"></div>
+</div></div>
 
-<div class="cartbar" id="cartbar">
-  <span id="cartInfo">0 items</span>
-  <span>View cart ›</span>
+<div class="sheet" id="cartSheet"><div class="sheet-inner">
+  <div class="sheet-head"><h2 id="t-cart">Your Cart</h2><button class="close-x" data-close>✕</button></div>
+  <div id="cartItems"></div>
+  <div class="seg">
+    <button class="on" data-when="now" id="t-now">Order Now</button>
+    <button data-when="later" id="t-later">Schedule for later</button>
+  </div>
+  <div class="slot-row" id="slotRow"><select id="slotSelect">
+    <option>Today, 8:00 PM – 8:30 PM</option><option>Today, 8:30 PM – 9:00 PM</option><option>Tomorrow, 1:00 PM – 1:30 PM</option>
+  </select></div>
+  <div class="pay-row" id="payRow">
+    <div class="pay-opt on" data-pay="UPI">📱 UPI</div>
+    <div class="pay-opt" data-pay="Card">💳 Card</div>
+    <div class="pay-opt" data-pay="COD">💵 Cash</div>
+  </div>
+  <div class="wallet-row" id="walletRow" style="display:none;">
+    <span>Use Foodie Cash (<span id="walletAvail">0</span> available)</span>
+    <input type="checkbox" id="useWallet">
+  </div>
+  <div class="coupon-row"><input id="couponInput" placeholder="Enter coupon code"><button id="applyCoupon">APPLY</button></div>
+  <div class="bill" id="bill"></div>
+  <button class="place-btn" id="placeBtn">Place Order</button>
+</div></div>
+
+<div class="sheet" id="addrSheet"><div class="sheet-inner">
+  <div class="sheet-head"><h2>Select address</h2><button class="close-x" data-close>✕</button></div>
+  <div id="addrList"></div>
+</div></div>
+
+<div class="sheet" id="trackSheet"><div class="sheet-inner">
+  <div class="sheet-head"><h2>Order #<span id="trackId"></span></h2><button class="close-x" data-close>✕</button></div>
+  <div class="road" id="road"><span class="bike">🛵</span></div>
+  <div id="trackSteps"></div>
+</div></div>
+
+<div class="sheet" id="ordersSheet"><div class="sheet-inner">
+  <div class="sheet-head"><h2>Your Orders</h2><button class="close-x" data-close>✕</button></div>
+  <div id="ordersList"></div>
+</div></div>
+
+<div class="sheet" id="walletSheet"><div class="sheet-inner">
+  <div class="sheet-head"><h2>Foodie Cash</h2><button class="close-x" data-close>✕</button></div>
+  <div style="padding:20px 16px; text-align:center;">
+    <div style="font-size:30px; font-weight:800;">₹<span id="walletBig">0</span></div>
+    <div style="font-size:12px; color:var(--muted); margin-top:4px;">Earn 5% back as Foodie Cash on every order</div>
+  </div>
+</div></div>
+
+<div class="rate-overlay" id="rateOverlay"><div class="rate-card">
+  <h3>Rate your order</h3><p>How was your food & delivery experience?</p>
+  <div class="stars" id="stars">☆☆☆☆☆</div>
+  <button id="rateSubmit">Submit</button>
+</div></div>
+
+<div class="cartbar" id="cartbar"><span id="cartInfo">0 items</span><span>View cart ›</span></div>
+
+<div class="tabbar">
+  <div class="tab active"><span class="ic">🏠</span><span id="t-home">Home</span></div>
+  <div class="tab" id="favTab"><span class="ic">❤️</span><span id="t-fav">Favorites</span></div>
+  <div class="tab" id="ordersTab"><span class="ic">🧾</span><span id="t-orders">Orders</span></div>
+  <div class="tab"><span class="ic">👤</span><span id="t-account">Account</span></div>
 </div>
 
 <script>
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
+setTimeout(()=>{ const s=document.getElementById('splash'); s.style.opacity='0'; setTimeout(()=>s.remove(),400); }, 800);
 
-const categories = [
-  ["🍕","Pizza"],["🍔","Burgers"],["🍜","Noodles"],["🥗","Healthy"],
-  ["🍰","Desserts"],["☕","Beverages"],["🌮","Mexican"],["🍛","Biryani"]
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
+function openSheet(id){ document.getElementById(id).classList.add('open'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> b.closest('.sheet').classList.remove('open'));
+document.querySelectorAll('.sheet').forEach(s=> s.addEventListener('click', e=>{ if(e.target===s) s.classList.remove('open'); }));
+
+// ---- Theme ----
+const themeBtn = document.getElementById('themeBtn');
+function applyTheme(t){ document.documentElement.dataset.theme=t; themeBtn.textContent = t==='dark'?'☀️':'🌙'; localStorage.setItem('foodie_theme',t); }
+applyTheme(localStorage.getItem('foodie_theme') || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+themeBtn.onclick = ()=> applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+
+// ---- Language ----
+const STR = {
+  en:{deliverTo:'DELIVER TO', cart:'Your Cart', near:'Restaurants near you', picked:'Hand-picked for your location',
+      now:'Order Now', later:'Schedule for later', home:'Home', fav:'Favorites', orders:'O account:'Account',
+      sort:'⇅ Sort', rating:'Rating 4.0+', fast:'Fast Delivery', offers:'Offers', refer:'🎁 Refer a friend & earn ₹100',
+      search:'Search for restaurants or dishes', place:'Place Order'},
+  hi:{deliverTo:'यहाँ डिलीवर करें', cart:'आपकी कार्ट', near:'आपके पास रेस्टोरेंट', picked:'आपके लोकेशन के लिए चुने गए',
+      now:'अभी ऑर्डर करें', later:'बाद के लिए शेड्यूल करें', home:'होम', fav:'पसंदीदा', orders:'ऑर्डर', account:'खाता',
+      sort:'⇅ सॉर्ट', rating:'रेटिंग 4.0+', fast:'तेज़ डिलीवरी', offers:'ऑफर्स', refer:'🎁 दोस्त को भेजें और ₹100 पाएं',
+      search:'रेस्टोरेंट या डिश खोजें', place:'ऑर्डर करें'}
+};
+let lang = localStorage.getItem('foodie_lang') || 'en';
+function applyLang(){
+  const s = STR[lang];
+  document.getElementById('t-deliverTo').firstChild.textContent = s.deliverTo;
+  document.getElementById('t-cart').textContent = s.cart;
+  document.getElementById('t-near').textContent = s.near;
+  document.getElementById('t-picked').textContent = s.picked;
+  document.getElementById('t-now').textContent = s.now;
+  document.getElementById('t-later').textContent = s.later;
+  document.getElementById('t-home').textContent = s.home;
+  document.getElementById('t-fav').textContent = s.fav;
+  document.getElementById('t-orders').textContent = s.orders;
+  document.getElementById('t-account').textContent = s.account;
+  document.getElementById('t-sort').textContent = s.sort;
+  document.getElementById('t-rating').textContent = s.rating;
+  document.getElementById('t-fast').textContent = s.fast;
+  document.getElementById('t-offers').textContent = s.offers;
+  document.getElementById('t-refer').textContent = s.refer;
+  document.getElementById('searchBox').placeholder = s.search;
+  document.getElementById('placeBtn').textContent = s.place;
+}
+document.getElementById('langBtn').onclick = ()=>{ lang = lang==='en'?'hi':'en'; localStorage.setItem('foodie_lang',lang); applyLang(); };
+applyLang();
+
+// ---- Wallet ----
+let wallet = Number(localStorage.getItem('foodie_wallet')||0);
+function renderWallet(){
+  document.getElementById('walletBadge').textContent = wallet;
+  document.getElementById('walletAvail').textContent = wallet;
+  document.getElementById('walletBig').textContent = wallet;
+}
+renderWallet();
+document.getElementById('walletBtn').onclick = ()=>{ renderWallet(); openSheet('walletSheet'); };
+
+// ---- Address ----
+const addresses = [
+  {id:'home', label:'Home', sub:'2 min away · Flat 302, Sector 12'},
+  {id:'work', label:'Work', sub:'12 min away · Tech Park, Block B'},
+  {id:'other', label:'Add new address', sub:'Save a new delivery location'}
 ];
-document.getElementById('cats').innerHTML = categories.map(([ic,n])=>
-  `<div class="cat"><div class="ic">${ic}</div><span>${n}</span></div>`).join('');
+document.getElementById('addrList').innerHTML = addresses.map(a=>`<div class="addr-opt" data-id="${a.id}"><div><b>${a.label}</b><span>${a.sub}</span></div><span>›</span></div>`).join('');
+document.getElementById('addrList').addEventListener('click', e=>{
+  const row = e.target.closest('.addr-opt'); if(!row) return;
+  const a = addresses.find(x=>x.id===row.dataset.id);
+  if(a.id!=='other') document.getElementById('locLabel').textContent = a.label;
+  closeSheet('addrSheet');
+});
+document.getElementById('locLabel').onclick = ()=> openSheet('addrSheet');
+document.getElementById('referBanner').onclick = ()=> alert('Your referral code: FOODIE-' + Math.random().toString(36).slice(2,7).toUpperCase());
+
+// ---- Data ----
+const categories = [["🍕","Pizza"],["🍔","Burgers"],["🍜","Noodles"],["🥗","Healthy"],["🍰","Desserts"],["☕","Beverages"],["🌮","Mexican"],["🍛","Biryani"]];
+document.getElementById('cats').innerHTML = categories.map(([ic,n])=>`<div class="cat"><div class="ic">${ic}</div><span>${n}</span></div>`).join('');
 
 const restaurants = [
-  {id:1, name:"Spice Route", icon:"🍛", cuisine:"North Indian · Biryani", time:"28 min", rating:4.3, price:"₹300 for two",
-    items:[["Chicken Biryani",249],["Paneer Butter Masala",219],["Garlic Naan",59],["Dal Makhani",189]]},
-  {id:2, name:"Pizza Theory", icon:"🍕", cuisine:"Pizza · Italian", time:"22 min", rating:4.1, price:"₹400 for two",
-    items:[["Margherita Pizza",259],["Farmhouse Pizza",329],["Garlic Bread",129],["Pasta Alfredo",249]]},
-  {id:3, name:"Burger Social", icon:"🍔", cuisine:"Burgers · Fast Food", time:"18 min", rating:4.4, price:"₹250 for two",
-    items:[["Classic Cheese Burger",149],["Crispy Chicken Burger",179],["Loaded Fries",99],["Cold Coffee",89]]},
-  {id:4, name:"Green Bowl", icon:"🥗", cuisine:"Healthy · Salads", time:"25 min", rating:4.6, price:"₹350 for two",
-    items:[["Quinoa Bowl",279],["Greek Salad",229],["Sprouts Chaat",159],["Detox Juice",119]]}
+  {id:1, name:"Spice Route", icon:"🍛", cuisine:"North Indian · Biryani", time:"28 MINS", rating:4.3, price:"₹300 for two", offer:"50% OFF up to ₹100",
+    items:[["Chicken Biryani",249,false,4.5],["Paneer Butter Masala",219,true,4.3],["Garlic Naan",59,true,4.1],["Dal Makhani",189,true,4.4]]},
+  {id:2, name:"Pizza Theory", icon:"🍕", cuisine:"Pizza · Italian", time:"22 MINS", rating:4.1, price:"₹400 for two", offer:"Buy 1 Get 1 Free",
+    items:[["Margherita Pizza",259,true,4.2],["Farmhouse Pizza",329,true,4.4],["Garlic Bread",129,true,4.0],["Pasta Alfredo",249,true,4.3]]},
+  {id:3, name:"Burger Social", icon:"🍔", cuisine:"Burgers · Fast Food", time:"18 MINS", rating:4.4, price:"₹250 for two", offer:"Free delivery",
+    items:[["Classic Cheese Burger",149,true,4.1],["Crispy Chicken Burger",179,false,4.5],["Loaded Fries",99,true,4.2],["Cold Coffee",89,true,4.0]]},
+  {id:4, name:"Green Bowl", icon:"🥗", cuisine:"Healthy · Salads", time:"25 MINS", rating:4.6, price:"₹350 for two", offer:"20% OFF above ₹299",
+    items:[["Quinoa Bowl",279,true,4.6],["Greek Salad",229,true,4.4],["Sprouts Chaat",159,true,4.2],["Detox Juice",119,true,4.3]]}
 ];
 
+let favorites = new Set(JSON.parse(localStorage.getItem('foodie_favs')||'[]'));
+let vegOnly = false, favOnly = false;
+let cart = {};
+
 const list = document.getElementById('list');
-list.innerHTML = restaurants.map(r=>`
-  <div class="r-card" data-id="${r.id}">
-    <div class="r-top">${r.icon}</div>
-    <div class="r-body">
-      <div class="r-name">${r.name}</div>
-      <div class="r-meta"><span>${r.cuisine}</span><span class="rating">★ ${r.rating}</span></div>
-      <div class="r-meta"><span>${r.time}</span><span>${r.price}</span></div>
-    </div>
-  </div>`).join('');
-
-let cart = {}; // key: "restId:itemName" -> {name, price, qty, restId}
-
-const sheet = document.getElementById('sheet');
-const sheetTitle = document.getElementById('sheetTitle');
-const sheetItems = document.getElementById('sheetItems');
-
-function openMenu(r){
-  sheetTitle.textContent = r.name;
-  sheetItems.innerHTML = r.items.map(([name,price])=>{
-    const key = r.id+":"+name;
-    const qty = cart[key]?.qty || 0;
-    return `<div class="item" data-key="${key}" data-rest="${r.id}" data-name="${name}" data-price="${price}">
-      <div>
-        <div class="item-name"><span class="dot"><i></i></span>${name}</div>
-        <div class="item-price">₹${price}</div>
-      </div>
-      <button class="add-btn ${qty?'active':''}">${qty? 'Added ✓' : 'ADD'}</button>
-    </div>`;
-  }).join('');
-  sheet.classList.add('open');
+function renderList(filterText=''){
+  const q = filterText.trim().toLowerCase();
+  let filtered = restaurants.filter(r => !q || r.name.toLowerCase().includes(q) || r.cuisine.toLowerCase().includes(q));
+  if(favOnly) filtered = filtered.filter(r=> favorites.has(r.id));
+  if(!filtered.length){ list.innerHTML = '<div class="empty">Nothing to show here.</div>'; return; }
+  list.innerHTML = filtered.map(r=>`
+    <div class="r-card" data-id="${r.id}">
+      <div class="r-top"><span class="r-badge">⭐ Top rated</span>
+        <button class="heart" data-fav="${r.id}">${favorites.has(r.id)?'❤️':'🤍'}</button>
+        ${r.icon}<span class="r-time-pill">⏱ ${r.time}</span></div>
+      <div class="r-body"><div class="r-name">${r.name}</div>
+        <div class="r-meta"><span class="rating">★ ${r.rating}</span><span class="dot-sep">·</span><span>${r.time}</span><span class="dot-sep">·</span><span>${r.price}</span></div>
+        <div class="r-meta" style="margin-top:2px;">${r.cuisine}</div>
+        <div class="r-offer">🏷️ ${r.offer}</div></div>
+    </div>`).join('');
 }
+renderList();
+document.getElementById('searchBox').addEventListener('input', e=> renderList(e.target.value));
+document.getElementById('vegChip').onclick = function(){ vegOnly=!vegOnly; this.classList.toggle('on',vegOnly); };
+document.getElementById('favTab').onclick = ()=>{ favOnly=!favOnly; renderList(document.getElementById('searchBox').value); toast(favOnly?'Showing favorites':'Showing all restaurants'); };
 
 list.addEventListener('click', e=>{
-  const card = e.target.closest('.r-card');
-  if(!card) return;
-  const r = restaurants.find(x=>x.id==card.dataset.id);
-  openMenu(r);
+  const favBtn = e.target.closest('[data-fav]');
+  if(favBtn){ const id=+favBtn.dataset.fav; favorites.has(id)?favorites.delete(id):favorites.add(id);
+    localStorage.setItem('foodie_favs', JSON.stringify([...favorites])); favBtn.textContent = favorites.has(id)?'❤️':'🤍'; return; }
+  const card = e.target.closest('.r-card'); if(!card) return;
+  openMenu(restaurants.find(x=>x.id==card.dataset.id));
   if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 });
 
-document.getElementById('sheetClose').onclick = ()=> sheet.classList.remove('open');
-sheet.addEventListener('click', e=>{ if(e.target===sheet) sheet.classList.remove('open'); });
-
+const sheetTitle = document.getElementById('sheetTitle');
+const sheetItems = document.getElementById('sheetItems');
+function qtyHtml(key){ const qty=cart[key]?.qty||0; return qty===0 ? `<button class="add-btn" data-action="add">ADD</button>` : `<div class="stepper"><button data-action="minus">−</button><span>${qty}</span><button data-action="plus">+</button></div>`; }
+function openMenu(r){
+  sheetTitle.textContent = r.name;
+  const rows = r.items.filter(it => !vegOnly || it[2]);
+  sheetItems.innerHTML = rows.length ? rows.map(([name,price,veg,stars],idx)=>{
+    const key = r.id+":"+name;
+    return `<div class="item" data-key="${key}" data-rest="${r.id}" data-name="${name}" data-price="${price}">
+      <div>${idx===0?'<span class="best-chip">BESTSELLER</span><br>':''}
+        <span class="item-name"><span class="dot ${veg?'':'nv'}"><i></i></span>${name}</span>
+        <div class="item-stars">★ ${stars}</div><div class="item-price">₹${price}</div></div>
+      <div class="item-right">${qtyHtml(key)}</div></div>`;
+  }).join('') : '<div class="empty">No veg items here.</div>';
+  openSheet('sheet');
+}
 sheetItems.addEventListener('click', e=>{
-  const btn = e.target.closest('.add-btn');
-  if(!btn) return;
-  const row = btn.closest('.item');
-  const key = row.dataset.key;
-  if(!cart[key]){
-    cart[key] = {name:row.dataset.name, price:+row.dataset.price, qty:0, restId:row.dataset.rest};
-  }
-  cart[key].qty += 1;
-  btn.textContent = 'Added ✓';
-  btn.classList.add('active');
-  if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  const btn = e.target.closest('[data-action]'); if(!btn) return;
+  const row = btn.closest('.item'); const key = row.dataset.key; const action = btn.dataset.action;
+  if(!cart[key]) cart[key] = {name:row.dataset.name, price:+row.dataset.price, qty:0, restId:row.dataset.rest};
+  if(action==='add'||action==='plus') cart[key].qty += 1;
+  if(action==='minus'){ cart[key].qty -= 1; if(cart[key].qty<=0) delete cart[key]; }
+  row.querySelector('.item-right').innerHTML = qtyHtml(key);
+  if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
   updateCartBar();
 });
 
-const cartbar = document.getElementById('cartbar');
-const cartInfo = document.getElementById('cartInfo');
-
+const cartbar = document.getElementById('cartbar'); const cartInfo = document.getElementById('cartInfo');
+function subtotal(){ return Object.values(cart).reduce((s,i)=>s+i.qty*i.price,0); }
 function updateCartBar(){
+  const items = Object.values(cart); const count = items.reduce((s,i)=>s+i.qty,0);
+  if(count>0){ cartbar.classList.add('show'); cartInfo.textContent = `${count} item${count>1?'s':''} · ₹${subtotal()}`; }
+  else cartbar.classList.remove('show');
+}
+cartbar.onclick = ()=>{ if(Object.keys(cart).length) openCartSheet(); };
+
+let appliedCoupon = null, scheduleWhen = 'now', payMethod = 'UPI', useWallet = false;
+
+document.querySelectorAll('.seg button').forEach(b=> b.onclick = function(){
+  document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on')); this.classList.add('on');
+  scheduleWhen = this.dataset.when; document.getElementById('slotRow').style.display = scheduleWhen==='later' ? 'block':'none';
+});
+document.querySelectorAll('.pay-opt').forEach(b=> b.onclick = function(){
+  document.querySelectorAll('.pay-opt').forEach(x=>x.classList.remove('on')); this.classList.add('on'); payMethod = this.dataset.pay;
+});
+document.getElementById('useWallet').onchange = function(){ useWallet = this.checked; renderBill(); };
+
+function openCartSheet(){
   const items = Object.values(cart);
-  const count = items.reduce((s,i)=>s+i.qty,0);
-  const total = items.reduce((s,i)=>s+i.qty*i.price,0);
-  if(count>0){
-    cartbar.classList.add('show');
-    cartInfo.textContent = `${count} item${count>1?'s':''} · ₹${total}`;
-    if(tg){
-      tg.MainButton.setText(`Place order · ₹${total}`);
-      tg.MainButton.show();
-      tg.MainButton.onClick(placeOrder);
-    }
-  } else {
-    cartbar.classList.remove('show');
-    if(tg) tg.MainButton.hide();
-  }
+  document.getElementById('cartItems').innerHTML = items.length ? items.map(i=>{
+    const key = Object.keys(cart).find(k=>cart[k]===i);
+    return `<div class="item" data-key="${key}"><div><span class="item-name">${i.name}</span><div class="item-price">₹${i.price} × ${i.qty}</div></div>
+      <div class="item-right"><div class="stepper"><button data-action="minus">−</button><span>${i.qty}</span><button data-action="plus">+</button></div></div></div>`;
+  }).join('') : '<div class="empty">Your cart is empty.</div>';
+  document.getElementById('walletRow').style.display = wallet>0 ? 'flex' : 'none';
+  renderBill(); openSheet('cartSheet');
+}
+document.getElementById('cartItems').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-action]'); if(!btn) return;
+  const key = btn.closest('.item').dataset.key; const action = btn.dataset.action;
+  if(action==='plus') cart[key].qty += 1;
+  if(action==='minus'){ cart[key].qty -= 1; if(cart[key].qty<=0) delete cart[key]; }
+  updateCartBar(); openCartSheet();
+});
+document.getElementById('applyCoupon').onclick = ()=>{
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  if(code==='FOODIE50' && subtotal()>=200){ appliedCoupon = 50; toast('Coupon applied — ₹50 off!'); }
+  else if(code==='FOODIE50'){ toast('Add items worth ₹200+ to use this coupon'); return; }
+  else { toast('Invalid coupon code'); return; }
+  renderBill();
+};
+function renderBill(){
+  const sub = subtotal(); const delivery = sub>=199?0:29; const tax = Math.round(sub*0.05);
+  const discount = appliedCoupon && sub>=200 ? appliedCoupon : 0;
+  let total = sub + delivery + tax - discount;
+  const walletUsed = useWallet ? Math.min(wallet, total) : 0;
+  total -= walletUsed;
+  document.getElementById('bill').innerHTML = `
+    <div class="bill-row"><span>Item total</span><span>₹${sub}</span></div>
+    ${discount?`<div class="bill-row disc"><span>Coupon FOODIE50</span><span>−₹${discount}</span></div>`:''}
+    <div class="bill-row"><span>Delivery fee</span><span>${delivery===0?'FREE':'₹'+delivery}</span></div>
+    <div class="bill-row"><span>Taxes & charges</span><span>₹${tax}</span></div>
+    ${walletUsed?`<div class="bill-row disc"><span>Foodie Cash used</span><span>−₹${walletUsed}</span></div>`:''}
+    <div class="bill-row total"><span>To Pay</span><span>₹${Math.max(0,total)}</span></div>`;
+  return Math.max(0,total);
 }
 
-// Point this at your deployed backend, e.g. "https://your-app.onrender.com"
 const API_URL = "";
+document.getElementById('placeBtn').onclick = ()=> placeOrder();
 
 async function placeOrder(){
+  if(!Object.keys(cart).length) return;
   const itemsArr = Object.values(cart).map(i=>({name:i.name, qty:i.qty, price:i.price}));
-  const total = itemsArr.reduce((s,i)=>s+i.qty*i.price,0);
+  const total = renderBill();
   const restName = restaurants.find(r=>r.id==Object.values(cart)[0]?.restId)?.name || "Foodie";
   const userId = tg?.initDataUnsafe?.user?.id;
+  const orderId = Math.floor(Math.random()*90000+10000);
 
-  if(!API_URL || !tg || !userId){
-    alert(`Order placed!\n${itemsArr.map(i=>`${i.qty}× ${i.name}`).join(', ')}\nTotal: ₹${total}`);
-    return;
+  if(API_URL && tg && userId){
+    try{
+      const res = await fetch(`${API_URL}/api/order`, { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ userId, items: itemsArr, total, restaurantName: restName, schedule: scheduleWhen, payMethod }) });
+      if(!res.ok) throw new Error();
+      tg.HapticFeedback?.notificationOccurred('success');
+    }catch(_){ toast("Couldn't place order. Try again."); return; }
   }
 
-  tg.MainButton.showProgress();
-  try{
-    const res = await fetch(`${API_URL}/api/order`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ userId, items: itemsArr, total, restaurantName: restName })
-    });
-    if(!res.ok) throw new Error("Order failed");
-    tg.HapticFeedback?.notificationOccurred('success');
-    tg.close();
-  }catch(err){
-    tg.MainButton.hideProgress();
-    tg.HapticFeedback?.notificationOccurred('error');
-    alert("Couldn't place order. Please try again.");
-  }
+  if(useWallet) wallet = Math.max(0, wallet - Math.min(wallet,total));
+  const cashback = Math.round(total*0.05); wallet += cashback;
+  localStorage.setItem('foodie_wallet', wallet); renderWallet();
+
+  const orders = JSON.parse(localStorage.getItem('foodie_orders')||'[]');
+  orders.unshift({id:orderId, restaurant:restName, total, items:itemsArr, date:new Date().toLocaleString(), when:scheduleWhen, pay:payMethod});
+  localStorage.setItem('foodie_orders', JSON.stringify(orders.slice(0,20)));
+
+  cart = {}; appliedCoupon = null; useWallet = false; updateCartBar();
+  closeSheet('cartSheet');
+  showTracking(orderId, cashback);
 }
 
-if(tg?.themeParams?.bg_color){
-  document.documentElement.style.setProperty('--bg', tg.themeParams.bg_color);
+document.getElementById('ordersTab').onclick = ()=>{
+  const orders = JSON.parse(localStorage.getItem('foodie_orders')||'[]');
+  document.getElementById('ordersList').innerHTML = orders.length ? orders.map(o=>`
+    <div class="order-hist"><b>#${o.id} — ${o.restaurant}</b><span>${o.date} · ₹${o.total} · ${o.pay}</span></div>`).join('')
+    : '<div class="empty">No orders yet.</div>';
+  openSheet('ordersSheet');
+};
+
+function showTracking(orderId, cashback){
+  document.getElementById('trackId').textContent = orderId;
+  const steps = [
+    {t:'Order placed', s:'Restaurant has received your order'},
+    {t:'Preparing your food', s:'The kitchen is working on it'},
+    {t:'Out for delivery', s:'Your rider is on the way'},
+    {t:'Delivered', s:'Enjoy your meal!'}
+  ];
+  let current = 0; const road = document.getElementById('road');
+  function render(){
+    road.style.display = current===2 ? 'block' : 'none';
+    document.getElementById('trackSteps').innerHTML = steps.map((s,i)=>`
+      <div class="track-step ${i<current?'done':i===current?'now':''}"><div class="track-dot">${i<current?'✓':i+1}</div><div><b>${s.t}</b><span>${s.s}</span></div></div>`).join('');
+  }
+  render(); openSheet('trackSheet');
+  const timer = setInterval(()=>{
+    current++;
+    if(current===2) toast('🛵 Your order is 10 mins away');
+    if(current>=steps.length){
+      clearInterval(timer); current=steps.length-1; render();
+      toast(`+₹${cashback} Foodie Cash credited!`);
+      setTimeout(()=> openSheet('rateOverlay'), 600);
+      return;
+    }
+    render();
+  }, 2500);
 }
+
+let ratingVal = 0;
+document.getElementById('stars').addEventListener('click', e=>{
+  const rect = e.currentTarget.getBoundingClientRect();
+  ratingVal = Math.max(1, Math.min(5, Math.ceil((e.clientX-rect.left)/(rect.width/5))));
+  e.currentTarget.textContent = '★★★★★'.slice(0,ratingVal) + '☆☆☆☆☆'.slice(ratingVal);
+});
+document.getElementById('rateSubmit').onclick = ()=>{ closeSheet('rateOverlay'); if(ratingVal) toast('Thanks for rating us ' + ratingVal + '★!'); document.getElementById('stars').textContent='☆☆☆☆☆'; ratingVal=0; };
+document.getElementById('rateOverlay').classList.remove('sheet');
 </script>
 </body>
 </html>
